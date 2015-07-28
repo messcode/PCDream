@@ -1,6 +1,8 @@
 # Code for “Prediction of survival and toxicity of docetaxel treatment in mCRPC patients using Random Forest Models” 
 Chihao Zhang, Shihua Zhang* 
+
 National Center for Mathematics and Interdisciplinary Sciences, Academy of Mathematics and Systems Science, Chinese Academy of Sciences, 100190 Beijing, China
+
 Contact email: zsh@amss.ac.cn
 ## Requirements
 Please ensure that you have installed R packages _caret_, _survival_, _randomForestSRC_, and _MASS_，_ROCR_, correctly.
