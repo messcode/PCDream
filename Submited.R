@@ -1,14 +1,11 @@
-######## Data Process ########
-# Description: 1.read the train csv file, modify the data and select variable.
-#              2.impute data with rsfrc
-
+## Code for Dream Challenge mCRPC ###
 require('randomForestSRC')
 require('survival')
 require('caret')
 require('MASS')
 require('ROCR')
 
-
+######## Data Process ########
 set.seed(0)
 trainCRPC <- read.csv('CoreTable_training.csv', na.string = c(' ', '.',''))
 testCRPC1 <- read.csv('CoreTable_validation.csv', na.string = c(' ', '.',''))
@@ -168,7 +165,7 @@ CRPC.lab <- CRPC.Q1.rfimpute[, 11:29]
 CRPC.lesion <- CRPC.Q1.rfimpute[,30:46]
 CRPC.surgery <- CRPC.Q1.rfimpute[, 47:65]
 CRPC.medical <- CRPC.Q1.rfimpute[, 66:102]
-CRPC.lesion.visceral <- rowSums(convert.to.num(CRPC.lesion[, visceral]))
+# CRPC.lesion.visceral <- rowSums(convert.to.num(CRPC.lesion[, visceral]))
 CRPC.lymph.only <-  (convert.to.num(CRPC.lesion)$LYM == 1 & 
                      rowSums(convert.to.num(CRPC.lesion)) <= 1)
 CRPC.bone.lym <-  (convert.to.num(CRPC.lesion)$LYM == 1 & 
@@ -232,8 +229,12 @@ Q1a.rf <- rfsrc(Surv(LKADT_P, DEATH) ~ ., data = Q1a.data[1:1600, ], ntree = 500
 Q1a.predict <- predict(Q1a.rf, Q1a.data[1601:1913, c(-1,-2)])
 
 # save Q1a resutl
+risk <- Q1a.predict$predicted / max(Q1a.predict$predicted)
 Q1a.submission <- data.frame(RPT = testCRPC1$RPT,
-                             RISK = Q1a.predict$predicted)
+                             riskScoreGlobal = risk,
+                             riskScore12 = risk,
+                             riskScore18 = risk,
+                             riskScore24 = risk)
 write.csv(Q1a.submission, 'finalq1a.csv', row.names = F)
 
 #######   Q1b Exact Death Time ######
@@ -259,7 +260,7 @@ Q1b.all <- rbind(Q1b.data, cbind(LKADT_P = NA, CRPC.test[1:313,]))
 Q1b.all <- Q1b.all[, linear_rg(alpha = 0.2)]
 Q1b.rf <- rfsrc(LKADT_P ~., Q1b.all[1:663, ])
 Q1b.predict <- predict(Q1b.rf, Q1b.all[664:976, -1], na.action = 'na.impute')
-Q1b.submission <- data.frame(RPT = testCRPC1$RPT,
+Q1b.submission <- data.frame(RPT = as.character(testCRPC1$RPT),
                             TIMETOEVENT = Q1b.predict$predicted)
 # write csv file for Q1b
 write.csv(Q1b.submission, 'finalq1b.csv', row.names = F)
@@ -301,7 +302,7 @@ Q2.all <- rbind(Q2.data, cbind(DISCONT = NA, ENTRT_PC = NA, CRPC.test[,colnames(
 Q2.rf <- rfsrc(Surv(ENTRT_PC, DISCONT) ~ ., data = Q2.all[1:1489, ])
 Q2.predict <- predict(Q2.rf, Q2.all[1490:1959, c(-1,-2)], na.action = 'na.impute')
 threshold <- quantile(Q2.predict$predicted, prob = threshold.q)
-Q2.submission <- data.frame(RPT = c(testCRPC1$RPT, testCRPC2$RPT), RISK = Q2.predict$predicted, 
+Q2.submission <- data.frame(RPT = c(as.character(testCRPC1$RPT), as.character(testCRPC2$RPT)), RISK = Q2.predict$predicted, 
                             DISCONT = as.numeric(Q2.predict$predicted < threshold))
 # write the csv file
 write.csv(Q2.submission, 'finalq2.csv', row.names = F)
